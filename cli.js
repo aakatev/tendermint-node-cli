@@ -102,6 +102,7 @@ e.on('init', () => {
   cli.responders.init();
 });
 
+// TODO: FIX bug with prompt
 e.on('stop', () => {
   cli.responders.stop();
 });
@@ -137,16 +138,28 @@ const cli = {
       ws.send(JSON.stringify(unsubscribeMsg));
     },
     subscribe (query) {
-      console.log(eventQueries.indexOf(query));
-      queryIndex = eventQueries.indexOf(query) !== -1 ? eventQueries.indexOf(query) : 2;
+      if (isEmpty(query)) {
+        console.log('Available queries:');
+        for(query of eventQueries) {
+          console.log(query);
+        }
+      } else {
+        queryIndex = eventQueries.indexOf(query);
+        if(queryIndex === -1) {
+          console.log('\x1b[31m%s\x1b[0m','Invalid query! Setted to NewBlockHeader (default).');
+          queryIndex = 2;
+        } 
+        console.log('\x1b[32m%s\x1b[0m',`Subscribtion query changed to ${eventQueries[queryIndex]}`);
+        subscribeMsg.params.query = `tm.event='${eventQueries[queryIndex]}'`;
+      }
     },
     man (){
       console.log('-------\nMini-Manual\n-------\n');
       console.log('1. Confiquire your query using subscribe [query_name] command (For now, you can only subscribe to one endpoint at a time).\n');
-      console.log('2. Send subscrition request to your using init command.\n');    
-      console.log('3. To unsubscribe from query use stop command.\n');
-      console.log('4. To see list of available queries use subscribe command.\n');
-      console.log('5. To quit app use exit comman or ctrl+C\n');
+      console.log('2. Send subscrition request to your node using init command.\n');    
+      console.log('3. To unsubscribe, use stop command.\n');
+      console.log('4. To see list of available queries, use subscribe command.\n');
+      console.log('5. To quit app, use exit comman or ctrl+C\n');
       console.log('For more information, suggestions, or contributions visit: https://github.com/aakatev/tendermint-node-cli\n');
     },
     exit () {
@@ -174,8 +187,6 @@ const cli = {
   // Constructor
   init() {
     console.log('\x1b[36m%s\x1b[0m', `Welcome to Tendermint Node CLI`);
-
-    _interface.prompt();
 
     _interface.on('line', (str) => {
       cli.processInput(str);
