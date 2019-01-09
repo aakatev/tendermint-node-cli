@@ -1,0 +1,22 @@
+{
+  "name": "tendermint-node-cli",
+  "version": "0.0.1",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aakatev/tendermint-node-cli.git"
+  },
+  "author": "",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/aakatev/tendermint-node-cli/issues"
+  },
+  "homepage": "https://github.com/aakatev/tendermint-node-cli#readme",
+  "dependencies": {
+    "ws": "^6.1.2"
+  }
+}
