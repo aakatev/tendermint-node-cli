@@ -6,10 +6,9 @@ Small nodejs cli tool allowing to subscribe to queries available in Tendermint v
 
 #### Features
 
-s
+Two main modes: 1) Subscribing to individual queries; or 2) Scrape all queries as json individual files (filename: timestamp+queryName).  
 
-#### How to install use?
-s
+#### How to install?
 ```bash
 # install dependencies (ws)
 npm i && mkdir .data
@@ -23,7 +22,7 @@ scrape - Start scraping.
 
 subscribe - List of available queries.
 
-subscribe [query_name] - Confiquire your query *(You can only subscribe to one endpoint at a time).
+subscribe [query_name] - Confiquire your query.
 
 init - Send subscribtion request to your node.
 
