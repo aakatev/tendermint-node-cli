@@ -4,6 +4,8 @@ const readline = require('readline');
 const events = require('events');
 const WebSocket = require('ws');
 const config = require('./config.json');
+const util = require('util');
+const dataUtil = require('./data-util');
 
 // CLI
 const _interface = readline.createInterface({
@@ -26,13 +28,17 @@ try {
     console.log(`Connection with ${config.cosmos_node.url}:${config.cosmos_node.ports[0]} closed!`);
     _interface.prompt();
   });
-   
+
   ws.on('message', function incoming(data) {
     let json = JSON.parse(data)
     if(isEmpty(json.result)) {
-      console.log('Done!');
+      console.log('Subscribed!');
     } else {
-      console.log(json.result.data);
+      dataUtil.create(`${json.result.data.type.replace(/.*\//g,'')}-${Date.now()}`, json.result.data, (err) => {
+        console.log(err);
+      }); 
+      // Log full json
+      console.log(util.inspect(json.result.data, {showHidden: false, depth: null}))
     }
     _interface.prompt();
   });
@@ -46,20 +52,20 @@ try {
 let queryIndex = 2;
 // Subscribtion query
 const eventQueries = [
-  'Tx', 
-  'NewBlock', 
-  'NewBlockHeader', 
-  'Vote', 
-  'NewRound', 
-  'NewRoundStep', 
-  'Polka', 
-  'Relock', 
-  'TimeoutPropose', 
-  'TimeoutWait', 
-  'Unlock', 
-  'ValidBlock', 
-  'ValidatorSetUpdates', 
-  'Lock', 
+  'Tx',
+  'NewBlock',
+  'NewBlockHeader',
+  'Vote',
+  'NewRound',
+  'NewRoundStep',
+  'Polka',
+  'Relock',
+  'TimeoutPropose',
+  'TimeoutWait',
+  'Unlock',
+  'ValidBlock',
+  'ValidatorSetUpdates',
+  'Lock',
   'CompleteProposal',
 ];
 
@@ -86,7 +92,7 @@ const isEmpty = (object) => {
 }
 
 // Custom events emitter (Cli commands handing)
-class _events extends events {   
+class _events extends events {
   constructor() {
     super()
   }
@@ -111,6 +117,10 @@ e.on('subscribe', (query) => {
   cli.responders.subscribe(query);
 });
 
+e.on('scrape', (query) => {
+  cli.responders.scrape(query);
+});
+
 e.on('man', () => {
   cli.responders.man();
 });
@@ -124,6 +134,7 @@ const commands = [
   'init',
   'stop',
   'subscribe',
+  'scrape',
   'man',
   'exit',
 ];
@@ -148,18 +159,35 @@ const cli = {
         if(queryIndex === -1) {
           console.log('\x1b[31m%s\x1b[0m','Invalid query! Setted to NewBlockHeader (default).');
           queryIndex = 2;
-        } 
+        }
         console.log('\x1b[32m%s\x1b[0m',`Subscribtion query changed to ${eventQueries[queryIndex]}`);
         subscribeMsg.params.query = `tm.event='${eventQueries[queryIndex]}'`;
       }
     },
+    // Todo
+    scrape () {
+
+      eventQueries.forEach((query) => {
+        let scrapeMsg = {
+          'jsonrpc': '2.0',
+          'method': 'subscribe',
+          'id': '0',
+          'params': {
+            'query': `tm.event='${query}'`,
+          },
+        };
+        ws.send(JSON.stringify(scrapeMsg));  
+      });
+
+    },
     man (){
-      console.log('-------\nMini-Manual\n-------\n');
-      console.log('1. Confiquire your query using subscribe [query_name] command (For now, you can only subscribe to one endpoint at a time).\n');
-      console.log('2. Send subscrition request to your node using init command.\n');    
-      console.log('3. To unsubscribe, use stop command.\n');
-      console.log('4. To see list of available queries, use subscribe command.\n');
-      console.log('5. To quit app, use exit comman or ctrl+C\n');
+      console.log('-------\nCommands\n-------\n');
+      console.log('1. scrape - Start scraping.\n');
+      console.log('2. subscribe - List of available queries.\n');
+      console.log('3. subscribe [query_name] - Confiquire your query *(You can only subscribe to one endpoint at a time).\n');
+      console.log('4. init - Send subscribtion request to your node.\n');
+      console.log('5. stop - Unsubscribe.\n');
+      console.log('6. exit - Quit app (or Ctrl+C)\n');
       console.log('For more information, suggestions, or contributions visit: https://github.com/aakatev/tendermint-node-cli\n');
     },
     exit () {
